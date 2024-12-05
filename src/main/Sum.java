@@ -97,3 +97,91 @@ public class Sum {
         }
     }
 }
+
+
+
+
+import sys
+import threading
+
+totalSoma = 0
+mutex = threading.Semaphore(1)
+soma_dic = {}
+
+def do_sum(path):
+    sum_local = 0
+    with open(path, 'rb') as f:
+        byte = f.read(1)
+        while byte:
+            sum_local += int.from_bytes(byte, byteorder='big', signed=False)
+            byte = f.read(1)
+        return sum_local
+
+def addSum(sum_local):
+    global totalSoma
+    try:
+        mutex.acquire()
+        totalSoma += sum_local
+    finally:
+        mutex.release()    
+
+def addDic(soma, path):
+    global soma_dic
+    try:
+        mutex.acquire()
+        if soma not in soma_dic:
+            soma_dic[soma] = []
+        soma_dic[soma].append(path)
+    finally:
+        mutex.release()
+
+
+def run(path):
+    multiplex.acquire()
+    try:   
+        soma_each = do_sum(path)
+        addSum(soma_each)
+        addDic(soma_each, path)
+    finally:
+        multiplex.release()
+
+threads = [] 
+if __name__ == "__main__":
+    paths = sys.argv[1:]
+
+    number_of_threads = len(paths)/2
+    multiplex = threading.Semaphore(number_of_threads)
+
+    for path in paths:
+        thread = threading.Thread(target=run, args=(path,))
+        threads.append(thread)
+        thread.start()
+
+
+    for thread in threads:
+        thread.join()
+    
+    print(f"SOMA TOTAL {totalSoma}")
+
+    for soma, files in soma_dic.items():
+        if(len(files)>1):
+            print(f"{soma} {''.join(files)}")
+
+
+
+
+ public static void addSomaMap(int soma, String path){
+            try{
+                mutex.acquire();
+                if(!somaMap.containsKey(soma)){
+                    somaMap.put(soma, new ArrayList<>());
+                }
+                somaMap.get(soma).add(path);
+            }catch(InterruptedException e ){
+
+            }finally{
+                mutex.release();
+            }
+        }
+    }    
+}
