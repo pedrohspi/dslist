@@ -11,6 +11,7 @@ public class Sum {
     private static Semaphore mutex = new Semaphore(1);
     private static int totalSum = 0;
     private static Semaphore multiplex;
+    private static HashMap<Integer, List<String>> sumMap = new HashMap<>();
 
     public static void main(String[] args) throws Exception {
         if (args.length < 1) {
@@ -31,6 +32,13 @@ public class Sum {
             thread.join();
         }
 
+        for (Integer sum : sumMap.keySet()) {
+            List<String> files = sumMap.get(sum);
+            if (files.size() > 1) {
+                System.out.println(sum + " " + String.join(" ", files));
+            }
+        }
+
         System.out.print(totalSum);
     }
 
@@ -46,9 +54,7 @@ public class Sum {
             try {
                 multiplex.acquire();
                 int parcial = sum();
-                mutex.acquire();
-                totalSum += parcial;
-                mutex.release();
+                addToTotal(parcial, path);
             } catch (IOException | InterruptedException e ) {
 
             } finally {
@@ -73,6 +79,21 @@ public class Sum {
                 sum += byteRead;
             }
             return sum;
+        }
+
+        public static void addSomaMap(int soma, String path){
+            try{
+                mutex.acquire();
+                totalSum += soma;
+                if(!somaMap.containsKey(soma)){
+                    somaMap.put(soma, new ArrayList<>());
+                }
+                somaMap.get(soma).add(path);
+            }catch(InterruptedException e ){
+
+            }finally{
+                mutex.release();
+            }
         }
     }
 }
